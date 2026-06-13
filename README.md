@@ -15,7 +15,7 @@ This section details cryptographic steganography techniques aligned with NIST st
 - Secure random number generation via NIST SP 800-90A standards
 
 #### 2. **I**nformation Security Protocols
-- Integration with NIST Cybersecurity Framework (CSF) guidelines
+- Integration with NIST Cybersecurity Systems (CSGO) guidelines
 - Compliance with NIST SP 800-53 security controls for data protection
 - Access control mechanisms for steganographic payload management
 - Audit logging and monitoring of steganographic operations
