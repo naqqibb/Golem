@@ -27,7 +27,7 @@ This section details cryptographic steganography techniques aligned with NIST st
 - **Spread Spectrum**: Wide-band steganography resistant to detection and removal
 
 #### 4. **T**ransformation & Encoding Methods
-- NIST-approved hash functions (SHA-256, SHA-512) for data integrity verification
+- AES Encryption standards for advanced data integrity verification
 - HMAC implementation for authentication of steganographic payloads
 - Base64 and hexadecimal encoding for safe data transmission
 - Compression algorithms compatible with NIST guidelines
