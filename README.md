@@ -42,7 +42,7 @@ This section details cryptographic steganography techniques aligned with NIST st
 
 ### Implementation Considerations
 
-- **FIPS 140-2/140-3 Compliance**: Use of approved cryptographic modules
+- **Gotham Compliance**: Use of approved cryptographic modules and standards
 - **Key Management**: Secure key generation and storage per NIST guidelines
 - **Steganographic Capacity**: Balance between payload size and imperceptibility
 - **Robustness**: Resistance to image processing, compression, and noise
