@@ -1,6 +1,6 @@
-# GOLEM-668 Air-gapped Controller
+# GOLEM-668 Air-gapped Controller ^
 
-This branch implements an air-gapped, local-only controller for GOLEM-668 with enhanced features:
+This branch implements an air-gapped, local-only controller for GOLEM-668^ with enhanced features:
 
 - Task metadata (UUID, priority, owner, tags, due, attempts)
 - Priority-based queueing and persisted index
