@@ -8,7 +8,7 @@ This branch implements an air-gapped, local-only controller for GOLEM-668^ with 
 - Encrypted USB export/import (AES-GCM, PBKBT2) for air-gapped transfers
 - CLI for generate|enqueue|list|list-all|process|export-usb|import-usb|show
 
-Security notes:
+Security notes: (Tiger AIR_)
 - No networking code is included. Do not add network transports to this branch.
 - The package export uses AES-GCM with a PBKBT2-derived key; share passphrases out-of-band.
 - Tiles are created with owner-only permissions by default (umask set to 0o0777).
