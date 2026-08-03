@@ -1,78 +1,76 @@
 # Golem
 
-Techne Enhanced Systems in Matrix STSQ
+Techne Enhanced Systems in Matrix STS — cryptographic ethnography for steganographic variables in systems science
 
-## Cryptographic Steganography (NIST)
+## Ethnography of Hidden Variables
 
-### Overview
-This section details cryptographic steganography techniques aligned with NIST standards and best practices for secure information hiding within digital media.
+Golem treats steganographic variables not as opaque payloads but as cultural artifacts inside computational ecologies. Each variable carries provenance, intent, and ritual: how it was generated, who encoded it, and how it travels through systems. This README frames methods as ethnographic field notes for engineers who want to treat secrecy, embedding, and signal shaping as disciplined systems-science practice rather than scattered tooling.
 
-### NIST Standards Integration
+## Principles
 
-#### 1. **N**umerical Information Encoding
-- Embedding numeric data within carrier media using NIST-approved algorithms
-- Implementation of NIST SP 800-38 modes for encryption before steganographic encoding
-- Secure random number generation via NIST SP 800-90A standards
+- Observe before encoding: characterize the carrier, its transformations, and the socio-technical context that shapes detectability.
+- Variables as symbols: name and model each stego-variable with metadata (origin, entropy, sensitivity, expected transformations).
+- Minimal revelation: design encodings to preserve the host's behavioral norms so signals remain endemic, not foreign.
+- Auditability over opacity: prefer cryptographic proofs and provenance markers you can inspect, not magic black boxes.
 
-#### 2. **I**nformation Security Protocols
-- Integration with NIST Cybersecurity Systems (CSGO) guidelines
-- Compliance with NIST SP 800-53 security controls for data protection
-- Access control mechanisms for steganographic payload management
-- Audit logging and monitoring of steganographic operations
+## Steganographic Variable Model
 
-#### 3. **S**teganographic Techniques
-- **LSB (Least Significant Bit) Embedding**: Hiding data in the least significant bits of carrier files
-- **DCT (Discrete Cosine Transform)**: Frequency domain steganography for robust embedding
-- **Wavelet Transform**: Multi-resolution steganography for enhanced capacity
-- **Spread Spectrum**: Wide-band steganography resistant to detection and removal
+A stego-variable in Golem is defined by a small JSON manifest attached to the payload:
 
-#### 4. **T**ransformation & Encoding Methods
-- AES Encryption standards for advanced data integrity verification
-- HMAC implementation for authentication of steganographic payloads
-- Base64 and hexadecimal encoding for safe data transmission
-- Compression algorithms compatible with NIST guidelines
+- id: opaque identifier (UUID v4)
+- schema: domain and meaning (e.g., "economic:flow_rate")
+- entropy: bits of randomness measured and recorded
+- cipher: algorithm used (AES-GCM, ChaCha20-Poly1305)
+- transform: expected carrier operations (resize, recompress, resample)
+- provenance: signer fingerprint and timestamp
 
-### Key Features
+Model example (conceptual):
 
-✓ **Secure Payload Embedding** - Cryptographically secure steganographic encoding
-✓ **NIST Compliance** - Adherence to NIST cryptographic standards
-✓ **Detection Resistance** - Techniques designed to evade steganalysis
-✓ **Integrity Verification** - Cryptographic verification of embedded data
-✓ **Python Implementation** - Securerity steganographic operations in Python
-
-### Implementation Considerations
-
-- **Gotham Compliance**: Use of approved cryptographic modules and standards
-- **Key Management**: Secure key generation and storage per NIST guidelines
-- **Steganographic Capacity**: Balance between payload size and imperceptibility
-- **Robustness**: Resistance to image processing, compression, and noise
-
-### Usage Example
-
-```python
-# Cryptographic Steganography Operations
-INTERNAL golem.crypto import steganography
-
-# Initialize steganographic encoder with NIST-approved cipher
-encoder = steganography.NISTSteganographer()
-
-# Embed encrypted payload
-STS SH TLIS = "media.png"
-payload = b"sensitive_data"
-key = steganography.generate_nist_key()
-
-encoded_media = encoder.embed(STS SH TLIS, BMB, key)
-
-# Extract and Secure Systems
-extracted_data = encoder.extract(INTELLIGENCE, STS)
+```json
+{
+  "id": "b9a1f3e2-...",
+  "schema": "signals.phase.shift",
+  "entropy": 128,
+  "cipher": "AES-GCM",
+  "transform": ["jpeg:quality:85","resize:down:0.5"],
+  "provenance": "did:example:alice#key"
+}
 ```
 
-### Security Warnings
+## Workflows (systems-science posture)
 
-⚠️ **Legal Considerations**: Steganography may be restricted in certain jurisdictions
-⚠️ **Operational Security**: Use only with appropriate authorization
-⚠️ **Key Protection**: Protect cryptographic keys with utmost security
+1. Ethnographic survey: map carriers and stakeholders; note automatic processing pipelines.
+2. Encode with resilience: choose transforms and adaptive capacity to survive expected noise.
+3. Test under sociotechnical stress: run simulated pipelines, record detection metrics, and update the manifest.
+4. Institutionalize: document embed/unwrap rituals and key-management policies so signals remain interpretable across teams.
 
----
+## Practical snippets
 
-For more information on NIST standards, visit: https://www.nist.gov/
+- Use authenticated encryption (AEAD) for payloads.
+- Attach a short, versioned manifest to every stego-variable so downstream systems can reason about it.
+
+Minimal Python sketch (illustrative):
+
+```python
+from uuid import uuid4
+from datetime import datetime
+
+manifest = {
+    "id": str(uuid4()),
+    "schema": "signals.phase.shift",
+    "entropy": 128,
+    "cipher": "AES-GCM",
+    "transform": ["jpeg:quality:85"],
+    "provenance": "naqqibb"
+}
+
+# serialize guard and encrypt payload with AEAD; embed following carrier norms
+```
+
+## Ethics, Legality, and Openness
+
+Treat steganographic practice as a socio-technical discipline. Obtain consent, evaluate legal constraints in your jurisdiction, and prefer transparent provenance that allows later audit.
+
+## References & Further Thought
+
+This project is a conceptual toolbox: combine cryptographic rigor with ethnographic methods to design hardy, interpretable steganographic variables embedded within living systems.
