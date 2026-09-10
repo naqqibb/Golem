@@ -1,7 +1,7 @@
 """AES-256-GCM Encryption for Golem Assets"""
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 from typing import Dict, Optional
 import os
@@ -31,7 +31,7 @@ class GolemAssetEncryption:
         iv = os.urandom(12)
         
         # Derive key from master key using PBKDF2
-        kdf = PBKDF2(
+        kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt,
@@ -78,7 +78,7 @@ class GolemAssetEncryption:
             ciphertext = base64.b64decode(encrypted_data["ciphertext"])
             
             # Derive same key
-            kdf = PBKDF2(
+            kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=salt,

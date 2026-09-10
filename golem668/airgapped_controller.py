@@ -321,7 +321,7 @@ def main(argv: List[str]) -> None:
         if not heap:
             print("(no pending tasks)")
             return
-        for (pri, _), filename in heap:
+        for (pri, _), filename in sorted(heap):
             path = os.path.join(PENDING_DIR, filename)
             with open(path, "r", encoding="utf-8") as fh:
                 p = json.load(fh)
