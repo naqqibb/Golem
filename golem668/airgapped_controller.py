@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 import uuid
@@ -49,6 +50,18 @@ INDEX_FILE = os.path.join(QUEUE_DIR, "index.json")
 
 # Ensure safe umask for created files (owner-only by default)
 os.umask(0o077)
+
+# Task ids become filenames under PENDING_DIR, so restrict them to a safe
+# character set to prevent path traversal (e.g. "../../etc/passwd").
+_SAFE_ID_RE = re.compile(r"^[A-Za-z0-9._-]+$")
+
+def validate_task_id(task_id: Any) -> str:
+    """Return task_id if it is a filename-safe token, else raise ValueError."""
+    if not isinstance(task_id, str) or not task_id:
+        raise ValueError("Task id must be a non-empty string.")
+    if not _SAFE_ID_RE.match(task_id) or task_id in {".", ".."}:
+        raise ValueError(f"Unsafe task id (allowed: letters, digits, '.', '_', '-'): {task_id!r}")
+    return task_id
 
 def log(tag: str, msg: str) -> None:
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -94,6 +107,12 @@ class TaskItem:
 
     @staticmethod
     def from_json(payload: Dict[str, Any]) -> "TaskItem":
+        if not isinstance(payload, dict):
+            raise TypeError("Task payload must be a dict.")
+        if not payload.get("id"):
+            raise ValueError("Task payload must include a non-empty 'id'.")
+        if not payload.get("task"):
+            raise ValueError("Task payload must include a non-empty 'task'.")
         queued_epoch = payload.get("_queued_epoch", time.time())
         priority_val = PRIORITY_MAP.get(payload.get("priority", "medium"), 3)
         return TaskItem(
@@ -122,6 +141,11 @@ def save_index(index: Dict[str, Any]) -> None:
 
 def enqueue_task(item: TaskItem) -> None:
     ensure_dirs()
+    validate_task_id(item.id)
+    if not item.task or not str(item.task).strip():
+        raise ValueError("Task text must not be empty.")
+    if item.priority not in PRIORITY_MAP:
+        raise ValueError(f"Unknown priority {item.priority!r}; expected one of {sorted(PRIORITY_MAP)}.")
     # persist task file named by id
     filename = f"{item.id}.task"
     path = os.path.join(PENDING_DIR, filename)
@@ -200,6 +224,8 @@ _DEFAULT_TASKS = [
 ]
 
 def synthesize(all_results: Dict[str, Any] = None) -> Dict[str, Any]:
+    if all_results is not None and not isinstance(all_results, dict):
+        raise TypeError("all_results must be a dict when provided.")
     ensure_dirs()
     cycle_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     assessment = {"tlp": _TLP, "cycle_time": cycle_time, "threats": _THREATS, "tasks": _DEFAULT_TASKS, "inputs": all_results or {}}
@@ -255,19 +281,47 @@ def export_usb(package_path: str, passphrase: str) -> None:
 def import_usb(package_path: str, passphrase: str) -> None:
     if not CRYPTO_AVAILABLE:
         raise RuntimeError("Cryptography package is required for export/import operations.")
+    if not isinstance(package_path, str) or not package_path:
+        raise ValueError("package_path must be a non-empty string.")
+    if not os.path.isfile(package_path):
+        raise FileNotFoundError(f"No such package file: {package_path}")
     ensure_dirs()
     with open(package_path, "r", encoding="utf-8") as f:
-        blob = json.load(f)
-    salt = bytes.fromhex(blob["salt"])
-    nonce = bytes.fromhex(blob["nonce"])
-    ct = bytes.fromhex(blob["ciphertext"])
+        try:
+            blob = json.load(f)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Package file is not valid JSON: {exc}") from exc
+    if not isinstance(blob, dict) or not {"salt", "nonce", "ciphertext"} <= blob.keys():
+        raise ValueError("Package file must contain 'salt', 'nonce' and 'ciphertext'.")
+    try:
+        salt = bytes.fromhex(blob["salt"])
+        nonce = bytes.fromhex(blob["nonce"])
+        ct = bytes.fromhex(blob["ciphertext"])
+    except (ValueError, TypeError) as exc:
+        raise ValueError(f"Package contains malformed hex fields: {exc}") from exc
     key = derive_key(passphrase, salt)
     aesgcm = AESGCM(key)
-    plaintext = aesgcm.decrypt(nonce, ct, None)
-    package = json.loads(plaintext.decode("utf-8"))
+    plaintext = aesgcm.decrypt(nonce, ct, None)  # raises InvalidTag on wrong passphrase/tamper
+    try:
+        package = json.loads(plaintext.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        raise ValueError(f"Decrypted package payload is not valid JSON: {exc}") from exc
+    if not isinstance(package, dict):
+        raise ValueError("Decrypted package must be a JSON object.")
+    pending = package.get("pending", [])
+    if not isinstance(pending, list):
+        raise ValueError("Package 'pending' must be a list.")
     # merge index/pending safely: write each pending task as new pending file (avoid overwriting)
-    for p in package.get("pending", []):
-        p_id = p.get("id") or str(uuid.uuid4())
+    for p in pending:
+        if not isinstance(p, dict):
+            log("GOLEM-668", "Skipping non-object pending entry in package.")
+            continue
+        candidate = p.get("id")
+        # Untrusted id: only reuse it when filename-safe, else assign a fresh one.
+        try:
+            p_id = validate_task_id(candidate)
+        except ValueError:
+            p_id = str(uuid.uuid4())
         # ensure unique file name
         filename = f"{p_id}.task"
         dest = os.path.join(PENDING_DIR, filename)
@@ -280,7 +334,11 @@ def import_usb(package_path: str, passphrase: str) -> None:
     # merge index (naive merge)
     idx = load_index()
     idx_tasks = idx.get("tasks", {})
-    for k, v in package.get("index", {}).get("tasks", {}).items():
+    package_index = package.get("index", {})
+    package_tasks = package_index.get("tasks", {}) if isinstance(package_index, dict) else {}
+    if not isinstance(package_tasks, dict):
+        package_tasks = {}
+    for k, v in package_tasks.items():
         if k not in idx_tasks:
             idx_tasks[k] = v
     idx["tasks"] = idx_tasks
@@ -302,8 +360,8 @@ def main(argv: List[str]) -> None:
     if args.cmd == "generate":
         synthesize({})
     elif args.cmd == "enqueue":
-        if not args.task:
-            print("enqueue requires --task")
+        if not args.task or not args.task.strip():
+            print("enqueue requires a non-empty --task")
             return
         item = TaskItem(
             sort_index=(PRIORITY_MAP[args.priority], time.time()),
